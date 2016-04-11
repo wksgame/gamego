@@ -2,6 +2,7 @@ package base
 
 import (
 	"log"
+	"time"
 )
 
 type MsgCallBack func(msg *Packet)
@@ -14,6 +15,7 @@ type MsgProc struct {
 type Processor struct {
 	callbackMap map[int32]MsgProc
 	msgqueue    chan *Packet
+	timer       *time.Ticker
 }
 
 func (self *Processor) PushMessage(msg *Packet) {
@@ -42,8 +44,16 @@ func (self *Processor) ProcessMessage() {
 		case msg := <-self.msgqueue:
 			if cb, ok := self.callbackMap[msg.MsgID]; ok {
 				cb.callback(msg)
-				log.Println("process message ok")
 			}
+		}
+	}
+}
+
+func (self *Processor) TimeOut() {
+	for {
+		select {
+		case <-self.timer.C:
+			log.Println("time out")
 		}
 	}
 }
@@ -51,9 +61,12 @@ func (self *Processor) ProcessMessage() {
 func newProcessor() *Processor {
 	p := &Processor{
 		callbackMap: make(map[int32]MsgProc),
-		msgqueue:    make(chan *Packet, 1000000),
+		msgqueue:    make(chan *Packet, 10),
+		timer:       time.NewTicker(time.Second * 2),
 	}
 
 	go p.ProcessMessage()
+	go p.TimeOut()
+
 	return p
 }

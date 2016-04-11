@@ -27,8 +27,8 @@ func ConnectServer(i int) {
 	stream := NewPacketStream(conn)
 
 	p := &Packet{
-		MsgID: 0,
-		Data:  []byte("hehehehehehehehehehehehehehehehehehehehahahahahahahahahahahahahahahaha " + strconv.Itoa(i)),
+		MsgID: 1,
+		Data:  []byte("hehehehehe " + strconv.Itoa(i)),
 	}
 
 	for {
@@ -43,7 +43,7 @@ func ConnectServer(i int) {
 func main() {
 	//time.Sleep(time.Second * 3)
 
-	for i := 0; i < 10000; i++ {
+	for i := 0; i < 1; i++ {
 		go ConnectServer(i)
 		//		if i%50 == 0 {
 		//			time.Sleep(time.Second)

@@ -24,7 +24,6 @@ func (self *Session) ID() int64 {
 
 func (self *Session) Run() {
 
-	log.Println("session run")
 	// 接收线程
 	go self.recvThread()
 
@@ -73,7 +72,6 @@ func (self *Session) sendThread() {
 				goto exitsendloop
 			}
 		case <-self.srv.exit:
-			log.Println("sys exit")
 			goto exitsendloop
 		case <-self.exit:
 			goto exitsendloop
@@ -83,8 +81,6 @@ func (self *Session) sendThread() {
 
 exitsendloop:
 	self.stream.Close()
-
-	//log.Println("socket send thread exit")
 }
 
 // 接收线程
@@ -93,11 +89,9 @@ func (self *Session) recvThread() {
 	var pkt *Packet
 
 	for {
-		// 从Socket读取封包
 		pkt, err = self.stream.Read()
 
 		if err != nil {
-			log.Println("socket recv err")
 			break
 		}
 
@@ -106,13 +100,12 @@ func (self *Session) recvThread() {
 	}
 
 	self.Close()
-	log.Println("socket recv thread exit")
 }
 
 func newSession(c net.Conn, s *Server) *Session {
 
 	ses := &Session{
-		writeChan: make(chan *Packet),
+		writeChan: make(chan *Packet, 100),
 		stream:    NewPacketStream(c),
 		srv:       s,
 		exit:      make(chan bool),

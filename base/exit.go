@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"time"
+	//	"time"
 )
 
 var exitSignal chan os.Signal
@@ -34,9 +34,9 @@ func ExitApp(cb func(interface{}), arg interface{}) {
 			cb(arg)
 		}
 
-		for i := 3; i > 0; i-- {
-			log.Printf("退出倒计时%d秒", i)
-			time.Sleep(time.Second)
-		}
+		//		for i := 3; i > 0; i-- {
+		//			log.Printf("退出倒计时%d秒", i)
+		//			time.Sleep(time.Second)
+		//		}
 	}()
 }
