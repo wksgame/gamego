@@ -66,7 +66,6 @@ func (self *Session) sendThread() {
 
 	for {
 		select {
-		// 封包
 		case pkt := <-self.writeChan:
 			if err := self.stream.Write(pkt); err != nil {
 				goto exitsendloop
