@@ -1,7 +1,7 @@
 package base
 
 import (
-	"log"
+	//"log"
 	"net"
 
 	//	"github.com/golang/protobuf/proto"

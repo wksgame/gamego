@@ -8,12 +8,19 @@ import (
 )
 
 var exitSignal chan os.Signal
+var exitRegiste bool = false
 
-type ExitCallback func()
+//type ExitCallback func()
 
-// 退出前调用cb
+// 退出程序前调用cb
 // type ExitCallback func()
-func ExitApp(cb func(interface{}), arg interface{}) {
+func ExitApplication(cb func(interface{}), arg interface{}) bool {
+
+	if exitRegiste {
+		return false
+	}
+
+	exitRegiste = true
 
 	exitSignal = make(chan os.Signal, 1)
 	signal.Notify(exitSignal, os.Interrupt, os.Kill)
@@ -39,4 +46,6 @@ func ExitApp(cb func(interface{}), arg interface{}) {
 		//			time.Sleep(time.Second)
 		//		}
 	}()
+
+	return true
 }

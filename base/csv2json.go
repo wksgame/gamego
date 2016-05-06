@@ -1,4 +1,4 @@
-package Base
+package base
 
 import (
 	"bytes"
@@ -19,14 +19,18 @@ func IsNumberString(s string) bool {
 func csv2json(csvfile string) string {
 
 	fp, err := os.Open(csvfile)
+	if err != nil {
+		return ""
+	}
 	defer fp.Close()
-	checkError(err, "csv2json")
 
 	reader := csv.NewReader(fp)
 	reader.Comma = ','
 	reader.Comment = '#'
 	record, err := reader.ReadAll()
-	checkError(err, "csv2json:"+csvfile)
+	if err != nil {
+		return ""
+	}
 
 	var buffer bytes.Buffer
 	buffer.WriteString("[\n")

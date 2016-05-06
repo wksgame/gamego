@@ -58,7 +58,7 @@ func (self *Processor) TimeOut() {
 	}
 }
 
-func newProcessor() *Processor {
+func NewProcessor() *Processor {
 	p := &Processor{
 		callbackMap: make(map[int32]MsgProc),
 		msgqueue:    make(chan *Packet, 10),

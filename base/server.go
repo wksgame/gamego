@@ -3,60 +3,64 @@ package base
 import (
 	"log"
 	"net"
-	"strconv"
 )
 
 type Server struct {
-	listener *net.TCPListener
+	netSrv   *netServer
 	Proc     *Processor
 	exit     chan bool
+	sessions map[int64]*Session
 }
 
-func (self *Server) listenAndServe(port int) error {
-	serverAddr, err := net.ResolveTCPAddr("tcp4", ":"+strconv.Itoa(port))
-	if err != nil {
-		return err
+func (self *Server) Accept(conn net.Conn) {
+	s := newSession(conn, self)
+	go s.Run()
+}
+
+func (self *Server) AddSession(s *Session) {
+	if v, ok := self.sessions[s.ID()]; ok {
+		log.Println("session repeat", v.ID())
 	}
+	self.sessions[s.ID()] = s
+}
 
-	l, err := net.ListenTCP("tcp", serverAddr)
-	if err != nil {
-		return err
+func (self *Server) RemoveSession(s *Session) {
+	if _, ok := self.sessions[s.ID()]; ok {
+		delete(self.sessions, s.ID())
+		log.Println("session online")
 	}
+}
 
-	self.listener = l
-
-	return nil
+func (self *Server) RemoveSessionByID(id int64) {
+	if _, ok := self.sessions[id]; ok {
+		delete(self.sessions, id)
+		log.Println("session online")
+	}
 }
 
 func (self *Server) Start() {
-	for {
-		c, err := self.listener.Accept()
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-
-		s := newSession(c, self)
-
-		go s.Run()
-	}
+	self.netSrv.Start(self.Accept)
 }
 
 func (self *Server) Stop(arg interface{}) {
 	close(self.exit)
 }
 
-func NewServer(port int) (*Server, error) {
-	server := &Server{
-		Proc: newProcessor(),
-		exit: make(chan bool),
-	}
-
-	err := server.listenAndServe(port)
+func NewServer(port int, pro *Processor) (*Server, error) {
+	net, err := NewNetServer(port)
 
 	if err != nil {
 		return nil, err
-	} else {
-		return server, nil
 	}
+
+	server := &Server{
+		netSrv:   net,
+		Proc:     pro,
+		exit:     make(chan bool),
+		sessions: make(map[int64]*Session),
+	}
+
+	ExitApplication(server.Stop, nil)
+
+	return server, nil
 }

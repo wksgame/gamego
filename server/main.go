@@ -10,12 +10,14 @@ func main() {
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	s, _ := NewServer(4444)
+	pro := NewProcessor()
+	pro.RegisterMessage(0, true, OnLogin)
+	pro.RegisterMessage(1, false, OnLogin)
 
-	s.Proc.RegisterMessage(0, true, OnLogin)
-	s.Proc.RegisterMessage(1, false, OnLogin)
+	ser, err := NewServer(4444, pro)
+	if err != nil {
+		return
+	}
 
-	ExitApp(s.Stop, nil)
-
-	s.Start()
+	ser.Start()
 }
