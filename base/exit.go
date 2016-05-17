@@ -4,48 +4,55 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	//	"time"
+	"sync"
+	"sync/atomic"
 )
 
-var exitSignal chan os.Signal
-var exitRegiste bool = false
+type Once2 struct {
+	m    sync.Mutex
+	done uint32
+}
 
-//type ExitCallback func()
-
-// 退出程序前调用cb
-// type ExitCallback func()
-func ExitApplication(cb func(interface{}), arg interface{}) bool {
-
-	if exitRegiste {
-		return false
+func (o *Once2) Do(f func()) {
+	if atomic.LoadUint32(&o.done) == 1 {
+		panic("repeat")
+		return
 	}
 
-	exitRegiste = true
+	o.m.Lock()
+	defer o.m.Unlock()
+	if o.done == 0 {
+		defer atomic.StoreUint32(&o.done, 1)
+		f()
+	} else {
+		panic("repeat2")
+	}
+}
 
-	exitSignal = make(chan os.Signal, 1)
-	signal.Notify(exitSignal, os.Interrupt, os.Kill)
+var exitSignal chan os.Signal
+var exitOnce Once2
 
-	go func() {
-		defer func() {
-			if err := recover(); err != nil {
-				log.Println(err)
+// 退出程序前调用cb,仅能调用一次
+func ExitApplication(cb func(interface{}), arg interface{}) {
+	exitOnce.Do(func() {
+		exitSignal = make(chan os.Signal, 1)
+		signal.Notify(exitSignal, os.Interrupt, os.Kill)
+
+		go func() {
+			defer func() {
+				if err := recover(); err != nil {
+					log.Println(err)
+				}
+				os.Exit(1)
+			}()
+
+			s := <-exitSignal
+
+			log.Println("recv signal:", s)
+
+			if cb != nil {
+				cb(arg)
 			}
-			os.Exit(1)
 		}()
-
-		s := <-exitSignal
-
-		log.Println("recv signal:", s)
-
-		if cb != nil {
-			cb(arg)
-		}
-
-		//		for i := 3; i > 0; i-- {
-		//			log.Printf("退出倒计时%d秒", i)
-		//			time.Sleep(time.Second)
-		//		}
-	}()
-
-	return true
+	})
 }
