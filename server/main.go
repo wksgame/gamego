@@ -14,10 +14,5 @@ func main() {
 	pro.RegisterMessage(0, true, OnLogin)
 	pro.RegisterMessage(1, false, OnLogin)
 
-	ser, err := NewServer(4444, pro)
-	if err != nil {
-		return
-	}
-
-	ser.Start()
+	NewServer(4444, pro)
 }

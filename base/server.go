@@ -6,13 +6,19 @@ import (
 )
 
 type Server struct {
-	netSrv   *netServer
+	netSrv   *NetServer
 	Proc     *Processor
 	exit     chan bool
 	sessions map[int64]*Session
 }
 
-func (self *Server) Accept(conn net.Conn) {
+// 实现ConnectHandler接口
+func (self *Server) SetNetServer(ns *NetServer) {
+	self.netSrv = ns
+}
+
+// 实现ConnectHandler接口
+func (self *Server) NewConnect(conn net.Conn) {
 	s := newSession(conn, self)
 	go s.Run()
 }
@@ -38,23 +44,12 @@ func (self *Server) RemoveSessionByID(id int64) {
 	}
 }
 
-func (self *Server) Start() {
-	self.netSrv.Start(self.Accept)
-}
-
 func (self *Server) Stop(arg interface{}) {
 	close(self.exit)
 }
 
-func NewServer(port int, pro *Processor) (*Server, error) {
-	net, err := NewNetServer(port)
-
-	if err != nil {
-		return nil, err
-	}
-
+func NewServer(port int, pro *Processor) error {
 	server := &Server{
-		netSrv:   net,
 		Proc:     pro,
 		exit:     make(chan bool),
 		sessions: make(map[int64]*Session),
@@ -62,5 +57,7 @@ func NewServer(port int, pro *Processor) (*Server, error) {
 
 	ExitApplication(server.Stop, nil)
 
-	return server, nil
+	ns := &NetServer{}
+	err := ns.ListenAndServe(port, server)
+	return err
 }
