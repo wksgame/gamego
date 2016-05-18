@@ -5,8 +5,8 @@ import (
 	"encoding/binary"
 	"errors"
 	"io"
+	"log"
 	"net"
-	"sync"
 )
 
 type Packet struct {
@@ -20,28 +20,90 @@ const (
 	MaxPacketSize     = 1024 * 8
 )
 
-// 封包流
-type PacketStream interface {
-	Read() (*Packet, error)
-	Write(pkt *Packet) error
-	Close() error
-	Raw() net.Conn
-}
-
-type packetStream struct {
-	conn         net.Conn
-	sendtagGuard sync.RWMutex
-	msghead      []byte // read message head
-}
-
 var (
-	packageTagNotMatch     = errors.New("ReadPacket: package tag not match")
-	packageDataSizeInvalid = errors.New("ReadPacket: package crack, invalid size")
+	packageDataSizeInvalid = errors.New("ReadPacket: package invalid size")
 	packageTooBig          = errors.New("ReadPacket: package too big")
 )
 
-// 从socket读取1个封包,并返回
-func (self *packetStream) Read() (p *Packet, err error) {
+// 封包流
+type PacketStream interface {
+	Close() error
+	Raw() net.Conn
+
+	// 调用此接口从流中读取数据
+	// 例如：
+	//	r := stream.ReadChan()
+	//	for {
+	//		select {
+	//		case pkt := <-r: //请不要在这直接使用stream.Read()
+	//			// todo
+	//		}
+	//	}
+	ReadChan() <-chan *Packet
+
+	// 调用此接口向流中写入数据
+	WriteChan() chan<- *Packet
+}
+
+type packetStream struct {
+	conn    net.Conn
+	msghead []byte       // read message head
+	r       chan *Packet // 内部从socket读取数据存入r,外部调用接口从r读取数据
+	w       chan *Packet // 内部从w读取数据写入socket,外部调用接口写入数据到w
+}
+
+// 实现PacketStream接口
+func (self *packetStream) Close() error {
+	return self.conn.Close()
+}
+
+// 实现PacketStream接口
+func (self *packetStream) Raw() net.Conn {
+	return self.conn
+}
+
+// 实现PacketStream接口
+func (self *packetStream) ReadChan() <-chan *Packet {
+	return self.r
+}
+
+// 实现PacketStream接口
+func (self *packetStream) WriteChan() chan<- *Packet {
+	return self.w
+}
+
+func (self *packetStream) Go() {
+	go self.readGo()
+	go self.writeGo()
+}
+
+func (self *packetStream) readGo() {
+	for {
+		p, err := self.read()
+		if err != nil {
+			close(self.r)
+			close(self.w)
+			self.conn.Close()
+
+			log.Printf("packetStream recv error:%s", err)
+			return
+		}
+		self.r <- p
+	}
+}
+
+func (self *packetStream) writeGo() {
+	for p := range self.w {
+		err := self.write(p)
+		if err != nil {
+			return
+		}
+	}
+	log.Printf("wirteGo exit")
+}
+
+// 从socket读取数据
+func (self *packetStream) read() (p *Packet, err error) {
 
 	if _, err = io.ReadFull(self.conn, self.msghead); err != nil {
 		return nil, err
@@ -80,14 +142,10 @@ func (self *packetStream) Read() (p *Packet, err error) {
 	return
 }
 
-// 将一个封包发送到socket
-func (self *packetStream) Write(pkt *Packet) (err error) {
+// 发送数据到socket
+func (self *packetStream) write(pkt *Packet) (err error) {
 
 	outbuff := bytes.NewBuffer([]byte{})
-
-	// 防止将Send放在go内造成的多线程冲突问题
-	self.sendtagGuard.Lock()
-	defer self.sendtagGuard.Unlock()
 
 	// 写入消息长度
 	if err = binary.Write(outbuff, binary.LittleEndian, int32(len(pkt.Data))); err != nil {
@@ -104,28 +162,21 @@ func (self *packetStream) Write(pkt *Packet) (err error) {
 		return
 	}
 
-	// 发包头
+	// 发送数据
 	if _, err = self.conn.Write(outbuff.Bytes()); err != nil {
-		return err
+		return
 	}
 
 	return
 }
 
-// 关闭
-func (self *packetStream) Close() error {
-	return self.conn.Close()
-}
-
-// 裸socket操作
-func (self *packetStream) Raw() net.Conn {
-	return self.conn
-}
-
-// 封包流 relay模式: 在封包头有clientid信息
 func NewPacketStream(conn net.Conn) PacketStream {
-	return &packetStream{
+	stream := &packetStream{
 		conn:    conn,
 		msghead: make([]byte, PackageHeaderSize),
+		r:       make(chan *Packet, 100),
+		w:       make(chan *Packet, 100),
 	}
+	go stream.Go()
+	return stream
 }

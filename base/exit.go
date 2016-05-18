@@ -16,7 +16,6 @@ type Once2 struct {
 func (o *Once2) Do(f func()) {
 	if atomic.LoadUint32(&o.done) == 1 {
 		panic("repeat")
-		return
 	}
 
 	o.m.Lock()

@@ -31,19 +31,30 @@ func ConnectServer(i int) {
 		Data:  []byte("hehehehehe " + strconv.Itoa(i)),
 	}
 
+	rc := stream.ReadChan()
+	wc := stream.WriteChan()
 	for {
-		stream.Write(p)
-		pkt, _ := stream.Read()
-		log.Println(string(pkt.Data))
-		time.Sleep(time.Millisecond * 5)
+		select {
+		case pkt, ok := <-rc:
+			if !ok {
+				goto exit
+			}
+			log.Println(string(pkt.Data))
+		default:
+			wc <- p
+			log.Printf("send message")
+			time.Sleep(time.Millisecond * 500)
+		}
 	}
+
+exit:
 	log.Println("exit:", i)
 }
 
 func main() {
 	//time.Sleep(time.Second * 3)
 
-	for i := 0; i < 1; i++ {
+	for i := 0; i < 1000; i++ {
 		go ConnectServer(i)
 		//		if i%50 == 0 {
 		//			time.Sleep(time.Second)
