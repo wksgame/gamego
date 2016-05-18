@@ -52,6 +52,19 @@ exit:
 }
 
 func main() {
+	ini := &IniConfig{}
+	if err := ini.Parse("client.ini"); err != nil {
+		return
+	}
+	ip, err := ini.GetValue("client", "ip")
+	if err != nil {
+		return
+	}
+	port, err := ini.GetValue("client", "port")
+	if err != nil {
+		return
+	}
+	ipport = ip + ":" + port
 	//time.Sleep(time.Second * 3)
 
 	for i := 0; i < 1000; i++ {
