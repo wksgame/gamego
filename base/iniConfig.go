@@ -67,6 +67,11 @@ func (self *IniConfig) Parse(filename string) error {
 			key = line[l+1 : r]
 			key = strings.TrimSpace(key)
 
+			if len(key) <= 0 {
+				log.Printf("IniConfig error, file:%s line:%d", filename, ln)
+				continue
+			}
+
 			if _, ok := self.data[key]; !ok {
 				self.data[key] = make(map[string]string)
 			}
@@ -115,7 +120,7 @@ func (self *IniConfig) GetValue(key, field string) (string, error) {
 			return fv, nil
 		}
 	}
-	return "", ErrNoValue
+	return "", fmt.Errorf("IniConfig error, no value:(%s, %s)", key, field)
 }
 
 func (self *IniConfig) GetInt(key, field string) (int, error) {
@@ -124,7 +129,12 @@ func (self *IniConfig) GetInt(key, field string) (int, error) {
 		return 0, err
 	}
 
-	return strconv.Atoi(v)
+	i, err := strconv.Atoi(v)
+	if err != nil {
+		return 0, fmt.Errorf("IniConfig error, convert:(%s, %s) %s", key, field, err.Error())
+	}
+
+	return i, nil
 }
 
 func (self *IniConfig) GetInt32(key, field string) (int32, error) {
@@ -134,6 +144,10 @@ func (self *IniConfig) GetInt32(key, field string) (int32, error) {
 	}
 
 	i64, err := strconv.ParseInt(v, 10, 32)
+	if err != nil {
+		return 0, fmt.Errorf("IniConfig error, convert:(%s, %s) %s", key, field, err.Error())
+	}
+
 	return int32(i64), err
 }
 
@@ -144,6 +158,10 @@ func (self *IniConfig) GetInt64(key, field string) (int64, error) {
 	}
 
 	i64, err := strconv.ParseInt(v, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("IniConfig error, convert:(%s, %s) %s", key, field, err.Error())
+	}
+
 	return i64, err
 }
 
@@ -154,6 +172,10 @@ func (self *IniConfig) GetUInt32(key, field string) (uint32, error) {
 	}
 
 	u64, err := strconv.ParseUint(v, 10, 32)
+	if err != nil {
+		return 0, fmt.Errorf("IniConfig error, convert:(%s, %s) %s", key, field, err.Error())
+	}
+
 	return uint32(u64), err
 }
 
@@ -164,5 +186,9 @@ func (self *IniConfig) GetUInt64(key, field string) (uint64, error) {
 	}
 
 	u64, err := strconv.ParseUint(v, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("IniConfig error, convert:(%s, %s) %s", key, field, err.Error())
+	}
+
 	return u64, err
 }
