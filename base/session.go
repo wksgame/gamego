@@ -35,7 +35,7 @@ func (self *Session) Run() {
 		case pkt, ok := <-R:
 			if ok {
 				log.Printf("Session recv message")
-				pkt.Sess = self
+				pkt.Sender = self
 				self.srv.Proc.PushMessage(pkt)
 			} else {
 				return

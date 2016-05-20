@@ -9,6 +9,6 @@ import (
 func OnLogin(msg *Packet) {
 	//log.Println("login data:", string(msg.Data))
 	//log.Println("login msgid:", msg.MsgID)
-
-	msg.Sess.Send(msg.MsgID, msg.Data)
+	session := msg.Sender.(*Session)
+	session.Send(msg.MsgID, msg.Data)
 }

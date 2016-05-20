@@ -9,10 +9,13 @@ import (
 	"net"
 )
 
+type Sender interface {
+}
+
 type Packet struct {
-	Sess  *Session
-	MsgID int32 // 消息ID
-	Data  []byte
+	Sender Sender // 包的来源
+	MsgID  int32  // 消息ID
+	Data   []byte
 }
 
 const (
