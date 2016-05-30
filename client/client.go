@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 	"net"
-	"strconv"
+	//"strconv"
 	"time"
 
 	. "../base"
@@ -26,9 +26,11 @@ func ConnectServer(i int) {
 
 	stream := NewPacketStream(conn)
 
+	//time.Sleep(time.Second * 15)
+
 	p := &Packet{
 		MsgID: 1,
-		Data:  []byte("hehehehehe " + strconv.Itoa(i)),
+		Data:  []byte("hehe"), //[]byte("hehehehehe " + strconv.Itoa(i)),
 	}
 
 	rc := stream.ReadChan()
@@ -67,7 +69,7 @@ func main() {
 	ipport = ip + ":" + port
 	//time.Sleep(time.Second * 3)
 
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 100; i++ {
 		go ConnectServer(i)
 		//		if i%50 == 0 {
 		//			time.Sleep(time.Second)

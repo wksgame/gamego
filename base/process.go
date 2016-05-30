@@ -62,7 +62,7 @@ func NewProcessor() *Processor {
 	p := &Processor{
 		callbackMap: make(map[int32]MsgProc),
 		msgqueue:    make(chan *Packet, 10),
-		timer:       time.NewTicker(time.Second * 2),
+		timer:       time.NewTicker(time.Second * 10),
 	}
 
 	go p.ProcessMessage()

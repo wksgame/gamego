@@ -2,7 +2,6 @@ package base
 
 import (
 	"log"
-	"net"
 )
 
 type Session struct {
@@ -29,10 +28,10 @@ func (self *Session) Send(msgid int32, msg []byte) {
 }
 
 func (self *Session) Run() {
-	R := self.stream.ReadChan()
+	//R := self.stream.ReadChan()
 	for {
 		select {
-		case pkt, ok := <-R:
+		case pkt, ok := <-self.stream.ReadChan(): //<-R:
 			if ok {
 				log.Printf("Session recv message")
 				pkt.Sender = self
@@ -46,9 +45,9 @@ func (self *Session) Run() {
 	}
 }
 
-func newSession(c net.Conn, s *Server) *Session {
+func newSession(stream PacketStream, s *Server) *Session {
 	ses := &Session{
-		stream: NewPacketStream(c),
+		stream: stream,
 		srv:    s,
 		exit:   make(chan bool),
 	}

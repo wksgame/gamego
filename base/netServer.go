@@ -7,7 +7,9 @@ import (
 )
 
 type ConnectHandler interface {
+	// 设置当前对应的NetServer
 	SetNetServer(*NetServer)
+	// 有新连接时的处理
 	NewConnect(conn net.Conn)
 }
 
