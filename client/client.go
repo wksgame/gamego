@@ -69,7 +69,7 @@ func main() {
 	ipport = ip + ":" + port
 	//time.Sleep(time.Second * 3)
 
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 800; i++ {
 		go ConnectServer(i)
 		//		if i%50 == 0 {
 		//			time.Sleep(time.Second)

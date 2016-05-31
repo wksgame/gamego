@@ -29,10 +29,9 @@ func (self *Server) NewConnect(conn net.Conn) {
 // 验证失败直接断开连接
 func (self *Server) Verify(conn net.Conn) {
 	stream := NewPacketStream(conn)
-	R := stream.ReadChan()
 	for {
 		select {
-		case pkt, ok := <-R:
+		case pkt, ok := <-stream.ReadChan():
 			if !ok {
 				log.Printf("Session verify failed, can't get packet")
 				return

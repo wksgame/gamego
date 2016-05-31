@@ -35,10 +35,9 @@ type PacketStream interface {
 
 	// 调用此接口从流中读取数据
 	// 例如：
-	//	r := stream.ReadChan()
 	//	for {
 	//		select {
-	//		case pkt := <-r: //请不要在这直接使用stream.Read()
+	//		case pkt := <-stream.ReadChan():
 	//			// todo
 	//		}
 	//	}

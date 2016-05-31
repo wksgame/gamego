@@ -28,10 +28,9 @@ func (self *Session) Send(msgid int32, msg []byte) {
 }
 
 func (self *Session) Run() {
-	//R := self.stream.ReadChan()
 	for {
 		select {
-		case pkt, ok := <-self.stream.ReadChan(): //<-R:
+		case pkt, ok := <-self.stream.ReadChan():
 			if ok {
 				log.Printf("Session recv message")
 				pkt.Sender = self
@@ -40,6 +39,7 @@ func (self *Session) Run() {
 				return
 			}
 		case <-self.exit:
+			self.stream.Close()
 			return
 		}
 	}
