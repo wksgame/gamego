@@ -4,6 +4,7 @@ import (
 	"log"
 	"net"
 	"strconv"
+	"time"
 )
 
 type ConnectHandler interface {
@@ -31,13 +32,28 @@ func (self *NetServer) ListenAndServe(port int, handler ConnectHandler) error {
 	}
 
 	self.listener = l
+	var tempDelay time.Duration // how long to sleep on accept failure
 
 	for {
 		conn, err := self.listener.Accept()
+
 		if err != nil {
-			log.Printf("NetServer accept error:%s", err)
-			continue
+			if ne, ok := err.(net.Error); ok && ne.Temporary() {
+				if tempDelay == 0 {
+					tempDelay = 5 * time.Second
+				} else {
+					tempDelay *= 2
+				}
+				if max := 1 * time.Second; tempDelay > max {
+					tempDelay = max
+				}
+				log.Printf("NetServer Accept error: %s; retrying in %s", err, tempDelay)
+				time.Sleep(tempDelay)
+				continue
+			}
+			return err
 		}
+		tempDelay = 0
 
 		handler.NewConnect(conn)
 	}

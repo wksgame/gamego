@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 	"net"
-	//"strconv"
+	"strconv"
 	"time"
 
 	. "../base"
@@ -24,17 +24,27 @@ func ConnectServer(i int) {
 		return
 	}
 
+	log.Printf("connect ok id:%d", i)
+
 	stream := NewPacketStream(conn)
 
 	//time.Sleep(time.Second * 15)
 
+	vp := &Packet{
+		MsgID: 1,
+		Data:  []byte("hehe"),
+	}
+
 	p := &Packet{
 		MsgID: 1,
-		Data:  []byte("hehe"), //[]byte("hehehehehe " + strconv.Itoa(i)),
+		Data:  []byte("message send by " + strconv.Itoa(i)),
 	}
 
 	rc := stream.ReadChan()
 	wc := stream.WriteChan()
+
+	wc <- vp
+
 	for {
 		select {
 		case pkt, ok := <-rc:
@@ -71,11 +81,6 @@ func main() {
 
 	for i := 0; i < 800; i++ {
 		go ConnectServer(i)
-		//		if i%50 == 0 {
-		//			time.Sleep(time.Second)
-		//		}
-		//time.Sleep(time.Millisecond * 50)
-		log.Println(i)
 	}
 
 	time.Sleep(time.Second * 3600)

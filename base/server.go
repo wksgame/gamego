@@ -10,7 +10,7 @@ type Server struct {
 	netSrv     *NetServer
 	Proc       *Processor
 	exit       chan bool
-	sessions   map[int64]*Session
+	sessions   *SessionManager
 	verifyFunc func(pkt *Packet) bool //检查连接是否合法
 }
 
@@ -39,7 +39,7 @@ func (self *Server) Verify(conn net.Conn) {
 			if self.verifyFunc(pkt) {
 				log.Printf("Session verify ok")
 				session := newSession(stream, self)
-				self.AddSession(session)
+				self.sessions.AddSession(session)
 				go session.Run()
 			} else {
 				stream.Close()
@@ -51,27 +51,6 @@ func (self *Server) Verify(conn net.Conn) {
 			log.Printf("Session verify failed, timeout")
 			return
 		}
-	}
-}
-
-func (self *Server) AddSession(s *Session) {
-	if v, ok := self.sessions[s.ID()]; ok {
-		log.Println("session repeat", v.ID())
-	}
-	self.sessions[s.ID()] = s
-}
-
-func (self *Server) RemoveSession(s *Session) {
-	if _, ok := self.sessions[s.ID()]; ok {
-		delete(self.sessions, s.ID())
-		log.Println("session online")
-	}
-}
-
-func (self *Server) RemoveSessionByID(id int64) {
-	if _, ok := self.sessions[id]; ok {
-		delete(self.sessions, id)
-		log.Println("session online")
 	}
 }
 
@@ -89,7 +68,7 @@ func NewServer(port int, pro *Processor) error {
 	server := &Server{
 		Proc:       pro,
 		exit:       make(chan bool),
-		sessions:   make(map[int64]*Session),
+		sessions:   NewSessionManager(1000),
 		verifyFunc: CheckAccount,
 	}
 
