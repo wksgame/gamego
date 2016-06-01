@@ -10,7 +10,7 @@ type Server struct {
 	netSrv     *NetServer
 	Proc       *Processor
 	exit       chan bool
-	sessions   *SessionManager
+	Manager    *SessionManager
 	verifyFunc func(pkt *Packet) bool //检查连接是否合法
 }
 
@@ -39,7 +39,8 @@ func (self *Server) Verify(conn net.Conn) {
 			if self.verifyFunc(pkt) {
 				log.Printf("Session verify ok")
 				session := newSession(stream, self)
-				self.sessions.AddSession(session)
+				session.SetID(int64(pkt.MsgID))
+				self.Manager.AddSession(session)
 				go session.Run()
 			} else {
 				stream.Close()
@@ -68,7 +69,7 @@ func NewServer(port int, pro *Processor) error {
 	server := &Server{
 		Proc:       pro,
 		exit:       make(chan bool),
-		sessions:   NewSessionManager(1000),
+		Manager:    NewSessionManager(1000),
 		verifyFunc: CheckAccount,
 	}
 

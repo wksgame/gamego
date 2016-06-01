@@ -12,3 +12,8 @@ func OnLogin(msg *Packet) {
 	session := msg.Sender.(*Session)
 	session.Send(msg.MsgID, msg.Data)
 }
+
+func OnLogout(msg *Packet) {
+	session := msg.Sender.(*Session)
+	session.Close()
+}

@@ -56,6 +56,7 @@ type packetStream struct {
 
 // 实现PacketStream接口
 func (self *packetStream) Close() error {
+	close(self.w)
 	return self.conn.Close()
 }
 
@@ -84,8 +85,7 @@ func (self *packetStream) readGo() {
 		p, err := self.read()
 		if err != nil {
 			close(self.r)
-			close(self.w)
-			self.conn.Close()
+			//self.conn.Close()
 
 			log.Printf("packetStream recv error:%s", err)
 			return
@@ -95,10 +95,15 @@ func (self *packetStream) readGo() {
 }
 
 func (self *packetStream) writeGo() {
+	ok := true
 	for p := range self.w {
+		if !ok {
+			continue
+		}
 		err := self.write(p)
 		if err != nil {
-			return
+			log.Printf("writeGo exit, err:%s", err)
+			ok = false
 		}
 	}
 	log.Printf("wirteGo exit")

@@ -44,7 +44,7 @@ func (self *NetServer) ListenAndServe(port int, handler ConnectHandler) error {
 				} else {
 					tempDelay *= 2
 				}
-				if max := 1 * time.Second; tempDelay > max {
+				if max := 60 * time.Second; tempDelay > max {
 					tempDelay = max
 				}
 				log.Printf("NetServer Accept error: %s; retrying in %s", err, tempDelay)

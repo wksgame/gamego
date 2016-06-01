@@ -23,6 +23,7 @@ func main() {
 	pro := NewProcessor()
 	pro.RegisterMessage(0, true, OnLogin)
 	pro.RegisterMessage(1, false, OnLogin)
+	pro.RegisterMessage(2, true, OnLogout)
 
 	NewServer(port, pro)
 }

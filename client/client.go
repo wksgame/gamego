@@ -31,7 +31,7 @@ func ConnectServer(i int) {
 	//time.Sleep(time.Second * 15)
 
 	vp := &Packet{
-		MsgID: 1,
+		MsgID: int32(i),
 		Data:  []byte("hehe"),
 	}
 
@@ -40,10 +40,16 @@ func ConnectServer(i int) {
 		Data:  []byte("message send by " + strconv.Itoa(i)),
 	}
 
+	q := &Packet{
+		MsgID: 2,
+		Data:  []byte("exit" + strconv.Itoa(i)),
+	}
+
 	rc := stream.ReadChan()
 	wc := stream.WriteChan()
 
 	wc <- vp
+	loop := 0
 
 	for {
 		select {
@@ -56,6 +62,11 @@ func ConnectServer(i int) {
 			wc <- p
 			log.Printf("send message")
 			time.Sleep(time.Millisecond * 500)
+			loop++
+			if loop > 5 {
+				wc <- q
+				goto exit
+			}
 		}
 	}
 
@@ -79,7 +90,7 @@ func main() {
 	ipport = ip + ":" + port
 	//time.Sleep(time.Second * 3)
 
-	for i := 0; i < 800; i++ {
+	for i := 0; i < 10; i++ {
 		go ConnectServer(i)
 	}
 
